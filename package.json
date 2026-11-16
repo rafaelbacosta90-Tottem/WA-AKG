@@ -5,10 +5,11 @@
   "license": "MIT",
   "scripts": {
     "dev": "npx tsx src/server/index.ts",
-    "build": "npx prisma generate && next build",
+    "build": "./node_modules/.bin/prisma generate && next build",
     "start": "NODE_ENV=production npx tsx src/server/index.ts",
     "lint": "eslint",
-    "db:push": "prisma db push && prisma generate",
+    
+    "db:push": "./node_modules/.bin/prisma db push && ./node_modules/.bin/prisma generate",
     "db:studio": "prisma studio",
     "make-admin": "node scripts/setup-admin.js",
     "test": "tsx --test src/**/__tests__/*.test.ts"
