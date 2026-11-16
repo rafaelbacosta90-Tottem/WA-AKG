@@ -4,7 +4,7 @@ WORKDIR /app
 RUN apk add --no-cache openssl ca-certificates
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL="mysql://build_user:build_pass@localhost:3306/wa_akg"
+ENV DATABASE_URL="postgresql://build_user:build_pass@localhost:5432/wa_akg"
 ENV AUTH_SECRET="build_secret_must_be_at_least_32_characters_long_for_nextjs"
 ENV NEXTAUTH_SECRET="build_secret_must_be_at_least_32_characters_long_for_nextjs"
 
@@ -12,16 +12,12 @@ ENV NEXTAUTH_SECRET="build_secret_must_be_at_least_32_characters_long_for_nextjs
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instala dependências (incluindo devDependencies) e garante o Prisma 5.22.0
-RUN npm install --legacy-peer-deps && npm install --no-save prisma@5.22.0
+# Instala todas as dependências completas e fixa o Prisma 5.22.0
+RUN npm install --legacy-peer-deps && npm install prisma@5.22.0 tsx typescript --legacy-peer-deps
 
 # Copia o restante do código e gera o Client + Build do Next.js
 COPY . .
-RUN npx prisma@5.22.0 generate && npm run build
-
-# Remove devDependencies e mantém apenas o necessário para produção
-ENV NODE_ENV=production
-RUN npm prune --omit=dev && npm install --no-save prisma@5.22.0 tsx typescript
+RUN npx prisma generate && npm run build
 
 # Imagem final de produção
 FROM node:20-alpine AS runner
@@ -48,4 +44,4 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma@5.22.0 db push && (if [ -n \"$ADMIN_EMAIL\" ] && [ -n \"$ADMIN_PASSWORD\" ]; then node scripts/setup-admin.js \"$ADMIN_EMAIL\" \"$ADMIN_PASSWORD\"; fi) && ./node_modules/.bin/tsx src/server/index.ts"]
+CMD ["sh", "-c", "npx prisma db push && (if [ -n \"$ADMIN_EMAIL\" ] && [ -n \"$ADMIN_PASSWORD\" ]; then node scripts/setup-admin.js \"$ADMIN_EMAIL\" \"$ADMIN_PASSWORD\"; fi) && npx tsx src/server/index.ts"]
