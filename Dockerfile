@@ -1,4 +1,4 @@
-FROM node:26-alpine AS builder
+FROM node:20-alpine AS builder
 RUN apk add --no-cache openssl ca-certificates
 WORKDIR /app
 
@@ -16,14 +16,14 @@ RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 # Source & build
 COPY . .
-RUN npx prisma generate && npm run build
+RUN npm run build
 
 # Strip devDeps from node_modules after build
 # tsx needed at runtime, kept explicitly
 RUN npm prune --omit=dev && npm install --no-save tsx typescript
 
 # Production image
-FROM node:26-alpine AS runner
+FROM node:20-alpine AS runner
 RUN apk add --no-cache openssl ca-certificates
 WORKDIR /app
 
